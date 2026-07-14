@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NuttX'in T3 Gemstone O1 (Cortex-R5F) Portlama Süreci</title>
+<style>
+  :root{
+    --paper:#ffffff;
+    --paper-2:#f7f7f4;
+    --ink:#1a1a18;
+    --ink-2:#54534e;
+    --ink-3:#8a8881;
+    --rule:#d9d8d2;
+    --rule-2:#bdbcb4;
+    --ref:#2d4a63;
+    --ref-soft:#eef2f5;
+    --red:#9e2b25;
+    --red-soft:#f7eeed;
+    --ok:#3a5a40;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;
+    --maxw:820px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:17px;line-height:1.72;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px;}
+
+  .runhead{border-bottom:1px solid var(--ink);font-family:var(--mono);font-size:11.5px;
+    letter-spacing:.04em;color:var(--ink-2);text-transform:uppercase;}
+  .runhead .wrap{display:flex;justify-content:space-between;gap:16px;padding:10px 28px;flex-wrap:wrap;}
+  .runhead b{color:var(--ink);font-weight:600;}
+
+  .cover{padding:74px 0 46px;border-bottom:2px solid var(--ink);}
+  .doc-meta{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ref);margin-bottom:26px;}
+  .cover h1{font-family:var(--serif);font-weight:600;font-size:clamp(30px,5vw,46px);
+    line-height:1.14;letter-spacing:-.005em;margin:0 0 20px;color:var(--ink);}
+  .cover .abstract{font-size:18px;color:var(--ink-2);max-width:640px;margin:0 0 30px;line-height:1.65;}
+  .keyspec{display:grid;grid-template-columns:auto 1fr;gap:0;border:1px solid var(--rule-2);
+    font-family:var(--mono);font-size:13px;max-width:540px;}
+  .keyspec dt{padding:7px 14px;border-bottom:1px solid var(--rule);background:var(--paper-2);
+    color:var(--ink-2);border-right:1px solid var(--rule-2);}
+  .keyspec dd{padding:7px 14px;border-bottom:1px solid var(--rule);margin:0;color:var(--ink);font-weight:600;}
+  .keyspec dt:last-of-type,.keyspec dd:last-of-type{border-bottom:0;}
+
+  section{padding:44px 0;border-bottom:1px solid var(--rule);scroll-margin-top:54px;}
+  .sec-no{font-family:var(--mono);font-size:12.5px;letter-spacing:.1em;color:var(--ref);
+    text-transform:uppercase;margin:0 0 6px;font-weight:600;}
+  h2{font-family:var(--serif);font-weight:600;font-size:clamp(23px,3.2vw,31px);
+    line-height:1.18;margin:0 0 14px;color:var(--ink);letter-spacing:-.005em;}
+  h3{font-family:var(--sans);font-weight:650;font-size:18px;margin:26px 0 6px;color:var(--ink);}
+  .sub{color:var(--ink-2);font-size:17.5px;margin:0 0 22px;max-width:680px;}
+  p{margin:0 0 16px;}
+  p:last-child{margin-bottom:0;}
+  strong{font-weight:650;color:var(--ink);}
+  em{color:var(--ink);}
+
+  .defs{border-top:1px solid var(--rule);}
+  .def{display:grid;grid-template-columns:170px 1fr;gap:24px;padding:16px 0;border-bottom:1px solid var(--rule);}
+  @media(max-width:620px){.def{grid-template-columns:1fr;gap:4px;}}
+  .def .term{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--ref);padding-top:2px;}
+  .def .body{color:var(--ink-2);font-size:16px;}
+  .def .body b{color:var(--ink);}
+
+  ul.list{list-style:none;margin:0;padding:0;}
+  ul.list li{position:relative;padding:8px 0 8px 26px;border-bottom:1px solid var(--rule);font-size:16.5px;color:var(--ink-2);}
+  ul.list li:last-child{border-bottom:0;}
+  ul.list li::before{content:"—";position:absolute;left:0;top:8px;color:var(--ref);font-family:var(--mono);}
+  ul.list li b{color:var(--ink);}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--rule-2);}
+  @media(max-width:620px){.two{grid-template-columns:1fr;}}
+  .two > div{padding:22px 22px;}
+  .two > div:first-child{border-right:1px solid var(--rule-2);}
+  @media(max-width:620px){.two > div:first-child{border-right:0;border-bottom:1px solid var(--rule-2);}}
+  .two h3{margin:0 0 12px;font-family:var(--serif);font-weight:600;font-size:19px;}
+  .two ul{list-style:none;margin:0;padding:0;}
+  .two li{padding:6px 0 6px 18px;position:relative;font-size:15.5px;color:var(--ink-2);line-height:1.5;}
+  .two li::before{content:"·";position:absolute;left:4px;color:var(--ref);font-weight:700;}
+
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--rule-2);}
+  table.spec{width:100%;border-collapse:collapse;font-size:14.5px;min-width:560px;}
+  table.spec th,table.spec td{padding:11px 16px;text-align:left;border-bottom:1px solid var(--rule);vertical-align:top;}
+  table.spec thead th{font-family:var(--mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--ink);background:var(--paper-2);border-bottom:1.5px solid var(--ink);}
+  table.spec td.k{font-weight:650;color:var(--ink);width:30%;}
+  table.spec td{color:var(--ink-2);}
+  table.spec tbody tr:last-child td{border-bottom:0;}
+
+  ol.proc{list-style:none;counter-reset:p;margin:0;padding:0;border-top:1px solid var(--rule);}
+  ol.proc li{counter-increment:p;display:grid;grid-template-columns:42px 1fr;gap:18px;
+    padding:16px 0;border-bottom:1px solid var(--rule);}
+  ol.proc li .n{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--ref);}
+  ol.proc li .n::before{content:counter(p,decimal-leading-zero);}
+  ol.proc li h4{margin:0 0 3px;font-size:16.5px;font-weight:650;color:var(--ink);}
+  ol.proc li p{margin:0;color:var(--ink-2);font-size:15.5px;line-height:1.55;}
+
+  pre{background:var(--paper-2);border:1px solid var(--rule-2);border-left:3px solid var(--ref);
+    padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.6;color:var(--ink);margin:18px 0;}
+  pre .c{color:var(--ink-3);}
+  pre .k{color:var(--ref);font-weight:600;}
+  pre .s{color:var(--red);}
+  code.m{font-family:var(--mono);font-size:.88em;background:var(--paper-2);color:var(--ref);
+    padding:1px 6px;border:1px solid var(--rule);border-radius:3px;}
+
+  .err{border:1px solid var(--rule-2);margin:0 0 16px;}
+  .err .head{display:flex;justify-content:space-between;gap:12px;align-items:center;
+    padding:8px 16px;background:var(--paper-2);border-bottom:1px solid var(--rule-2);
+    font-family:var(--mono);font-size:12px;color:var(--ink-2);}
+  .err .head .stage{letter-spacing:.04em;}
+  .err .head .step{color:var(--ink-3);}
+  .err .body{padding:14px 16px;}
+  .err .msg{font-family:var(--mono);font-size:13px;color:var(--red);white-space:pre-wrap;
+    margin:0 0 10px;padding-left:14px;border-left:2px solid var(--red);}
+  .err .fix{font-size:15.5px;color:var(--ink-2);margin:0;line-height:1.6;}
+  .err .fix b{color:var(--ink);}
+  .err .fix .lbl{color:var(--ok);font-weight:650;}
+
+  .tl{border-top:1px solid var(--rule);}
+  .tl-item{padding:18px 0;border-bottom:1px solid var(--rule);}
+  .tl-phase{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ref);font-weight:600;margin-bottom:3px;}
+  .tl-item h4{margin:0 0 5px;font-size:17px;font-weight:650;color:var(--ink);}
+  .tl-item p{margin:0;color:var(--ink-2);font-size:15.5px;line-height:1.55;}
+
+  .note{border:1px solid var(--rule-2);background:var(--paper-2);padding:16px 18px;margin:18px 0;
+    font-size:15.5px;color:var(--ink-2);line-height:1.6;}
+  .note .tag{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ref);font-weight:600;display:block;margin-bottom:5px;}
+  .note.alert{border-color:var(--red);background:var(--red-soft);}
+  .note.alert .tag{color:var(--red);}
+  .note b{color:var(--ink);}
+
+  .facts{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--rule-2);}
+  @media(max-width:620px){.facts{grid-template-columns:1fr;}}
+  .facts > div{padding:16px 18px;border-right:1px solid var(--rule);}
+  .facts > div:last-child{border-right:0;}
+  @media(max-width:620px){.facts > div{border-right:0;border-bottom:1px solid var(--rule);}
+    .facts > div:last-child{border-bottom:0;}}
+  .facts h4{font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--ref);margin:0 0 6px;font-weight:600;}
+  .facts p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.5;}
+
+  footer{padding:34px 0 60px;}
+  footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:20px;}
+  footer .note-f{font-family:var(--mono);font-size:12px;color:var(--ink-3);line-height:1.8;letter-spacing:.03em;}
+  footer b{color:var(--ink-2);}
+
+  a{color:var(--ref);}
+  a:focus-visible{outline:2px solid var(--ref);outline-offset:2px;}
+
+  @media print{section{break-inside:avoid;}body{font-size:11pt;}}
+</style>
+</head>
+<body>
+
+<div class="runhead"><div class="wrap">
+  <span>APACHE NUTTX · PORTLAMA NOTU</span>
+  <span><b>Hedef:</b> AM67A / Cortex-R5F · T3 Gemstone O1</span>
+</div></div>
+
+<header class="cover"><div class="wrap">
+  <p class="doc-meta">Gömülü Sistemler — Firmware Bring-up Notu</p>
+  <h1>Apache NuttX'in T3 Gemstone O1 kartına<br>(Cortex-R5F) portlanması</h1>
+  <p class="abstract">Gerçek zamanlı bir işletim sisteminin AM67A SoC üzerinde, kart başlatmadan NSH terminaline kadar sıfırdan ayağa kaldırılma süreci. Yeni başlayanlar için kavramlar, izlenen adımlar ve karşılaşılan hatalar.</p>
+  <dl class="keyspec">
+    <dt>SoC</dt><dd>Texas Instruments AM67A</dd>
+    <dt>Hedef çekirdek</dt><dd>Arm Cortex-R5F</dd>
+    <dt>İşletim sistemi</dt><dd>Apache NuttX (RTOS)</dd>
+    <dt>Yükleme yöntemi</dt><dd>RemoteProc (Linux → R5F)</dd>
+    <dt>Başarı ölçütü</dt><dd>NSH terminaline ulaşmak</dd>
+  </dl>
+</div></header>
+
+<main>
+
+<section id="kavram"><div class="wrap">
+  <p class="sec-no">01 — Başlamadan önce</p>
+  <h2>Birkaç temel kavram</h2>
+  <p class="sub">Süreci anlamak için önce şu altı terimi netleştirelim.</p>
+  <div class="defs">
+    <div class="def"><div class="term">RTOS</div><div class="body">Real-Time OS. Bir işin sadece doğru değil, <b>zamanında</b> bittiğini garanti eden işletim sistemi. Motor ya da sensör kontrolünde gecikme kabul edilemez.</div></div>
+    <div class="def"><div class="term">SoC</div><div class="body">System-on-Chip. Tek bir çip içinde birden çok işlemci çekirdeği, bellek ve çevre birimi barındıran yapı. Bizimki AM67A.</div></div>
+    <div class="def"><div class="term">Portlama</div><div class="body">Bir yazılımı, daha önce çalışmadığı yeni bir donanımda çalışır hale getirmek. Donanıma özel başlatma kodu ve sürücüler yazmayı gerektirir.</div></div>
+    <div class="def"><div class="term">Çekirdek (Core)</div><div class="body">Bir SoC içindeki bağımsız işlemci. AM67A'da farklı amaçlar için <b>A53</b>, <b>R5F</b> ve <b>C7x</b> çekirdekleri bir arada bulunur.</div></div>
+    <div class="def"><div class="term">NSH</div><div class="body">NuttShell — NuttX'in komut satırı terminali. Buraya ulaşmak, OS'in temelde ayağa kalktığının kanıtıdır.</div></div>
+    <div class="def"><div class="term">RemoteProc</div><div class="body">Linux'un, yanındaki başka bir çekirdeği başlatıp ona firmware yükleyebildiği mekanizma. NuttX'i R5F'e bu yolla yüklüyoruz.</div></div>
+  </div>
+</div></section>
+
+<section id="gorev"><div class="wrap">
+  <p class="sec-no">02 — Amaç</p>
+  <h2>Görev: NuttX'i R5F'te çalıştırmak</h2>
+  <p class="sub">Apache NuttX'i T3 Gemstone kartında, AM67A SoC'nin Cortex-R5F çekirdeğinde çalışır hale getirmek. Üç temel iş gerekiyordu:</p>
+  <ol class="proc">
+    <li><span class="n"></span><div><h4>Kartı başlatma</h4><p>İşlemci çekirdeklerini ve RAM'i (DDR) ayağa kaldırma.</p></div></li>
+    <li><span class="n"></span><div><h4>OS'i yükleme</h4><p>Derlenen NuttX'i çekirdeğin belleğine yerleştirme.</p></div></li>
+    <li><span class="n"></span><div><h4>Donanımı tanıtma</h4><p>Üzerindeki çevre birimlerini (UART, GPIO) eşleştirme.</p></div></li>
+  </ol>
+  <div class="note"><span class="tag">Neden zor?</span>R5F bir mikrodenetleyici çekirdeğidir: sınırlı alan, az bellek, düşük işlem gücü. NuttX'in tam da gömülü sistemler için tasarlanmış olması onu doğru seçim yapar.</div>
+</div></section>
+
+<section id="nuttx"><div class="wrap">
+  <p class="sec-no">03 — Yazılım tarafı</p>
+  <h2>Apache NuttX nedir?</h2>
+  <p class="sub">Gömülü sistemler ve mikrodenetleyiciler için tasarlanmış, açık kaynaklı bir gerçek zamanlı işletim sistemi. Bir Linux gibi davranır, ama çok daha küçüktür.</p>
+  <ul class="list">
+    <li><b>POSIX & ANSI uyumlu</b> — alışıldık standart API'leri kullanır; neredeyse her şey Linux-benzeridir.</li>
+    <li><b>Tamamen pre-emptible</b> — çalışan bir görev her an kesilip yerini daha öncelikli bir göreve bırakabilir.</li>
+    <li><b>Deterministik</b> — gerçek zamanlı, öngörülebilir davranış.</li>
+    <li><b>Ölçeklenebilir</b> — 8-bit'ten 64-bit gömülü sistemlere kadar aynı tasarımla.</li>
+    <li><b>Tümüyle yapılandırılabilir</b> — her parçası <code class="m">menuconfig</code> üzerinden açılıp kapatılır.</li>
+    <li><b>Açık kaynak</b> — Apache lisansı altında, ücretsiz ve değiştirilebilir.</li>
+  </ul>
+</div></section>
+
+<section id="neden"><div class="wrap">
+  <p class="sec-no">04 — Gerekçe</p>
+  <h2>Neden R5F çekirdeği, neden NuttX?</h2>
+  <div class="two">
+    <div>
+      <h3>Neden R5F çekirdeği?</h3>
+      <ul>
+        <li>Karttaki gerçek zamanlı işler için en uygun çekirdek</li>
+        <li>Deterministik, öngörülebilir davranış</li>
+        <li>Düşük interrupt gecikmesi, hızlı tepki süresi</li>
+        <li>Kritik görevler için düşük güç tüketimi</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Neden NuttX?</h3>
+      <ul>
+        <li>Gerçek zamanlı görevleri güvenilir biçimde yönetir</li>
+        <li>POSIX uyumu sayesinde tanıdık geliştirme ortamı</li>
+        <li>Yeni bir karta görece kolay portlanır mimari</li>
+        <li>Ardupilot ve PX4 gibi popüler otopilotları destekler</li>
+      </ul>
+    </div>
+  </div>
+</div></section>
+
+<section id="avsr"><div class="wrap">
+  <p class="sec-no">05 — Mimari farkı</p>
+  <h2>A çekirdeği ile R çekirdeği</h2>
+  <p class="sub">AM67A iki dünyayı bir arada barındırır: yüksek performanslı uygulama çekirdekleri (A53) ve gerçek zamanlı çekirdekler (R5F). İkisi temelden farklı amaçlar için tasarlanmıştır.</p>
+  <div class="tbl-wrap">
+    <table class="spec">
+      <thead><tr><th></th><th>A Çekirdeği · Cortex-A53</th><th>R Çekirdeği · Cortex-R5F</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Tasarım amacı</td><td>Yüksek verim, karmaşık işler</td><td>Gerçek zamanlı, deterministik görevler</td></tr>
+        <tr><td class="k">OS desteği</td><td>Neredeyse tüm OS'lar (Linux vb.)</td><td>Sınırlı: Baremetal, FreeRTOS, NuttX, Zephyr</td></tr>
+        <tr><td class="k">Interrupt gecikmesi</td><td>Yüksek</td><td>Düşük — hızlı tepki</td></tr>
+        <tr><td class="k">Cache</td><td>Daha büyük L1 ve L2</td><td>Küçük, deterministik</td></tr>
+        <tr><td class="k">Bellek yönetimi</td><td>MMU → sanal bellek var</td><td>MPU → sanal bellek yok</td></tr>
+        <tr><td class="k">Güç tüketimi</td><td>Yüksek</td><td>Düşük</td></tr>
+        <tr><td class="k">Kullanım alanı</td><td>Telefon, tablet, gömülü sistem</td><td>Otomotiv, endüstri, tıbbi, havacılık</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note alert"><span class="tag">Erken hata</span>Bu projedeki kritik erken hatalardan biri buradan doğdu: başlangıçta yanlışlıkla <b>A53'e (arm64) göre kod yazıldı</b>, sonra fark edilip her şey R5F (arm/armv7-r) için yeniden başlatıldı.</div>
+</div></section>
+
+<section id="donanim"><div class="wrap">
+  <p class="sec-no">06 — Donanım tarafı</p>
+  <h2>T3 Gemstone O1 ve AM67A</h2>
+  <p class="sub">T3-GEM-O1, Türkiye Teknoloji Takımı Vakfı tarafından geliştirilen, Texas Instruments AM67A SoC kullanan yerli bir tek kart bilgisayardır (SBC). Teknofest ve endüstriyel projeler hedeflenir.</p>
+  <div class="facts">
+    <div><h4>AM67A SoC</h4><p>4× Cortex-A53 @1.4GHz, 2× Cortex-R5F, C7x DSP yapay zeka hızlandırıcısı ve 3D GPU.</p></div>
+    <div><h4>Bellek</h4><p>4GB LPDDR4 RAM, 32GB eMMC + microSD. ECC destekli SRAM bölgeleri.</p></div>
+    <div><h4>Bağlantı</h4><p>Wi-Fi 6, BLE 5.4, Gigabit Ethernet, USB 3.0, PCIe Gen3, CAN-FD, 40-pin.</p></div>
+  </div>
+  <h3>Üç çekirdek, üç görev</h3>
+  <ul class="list">
+    <li><b>A53 → Linux.</b> Genel amaçlı, yüksek performanslı uygulama çekirdekleri; karttaki Debian/Ubuntu tabanlı dağıtımı çalıştırır.</li>
+    <li><b>R5F → RTOS.</b> Bizim hedefimiz. Baremetal, FreeRTOS, Zephyr veya NuttX çalıştırabilen gerçek zamanlı çekirdek.</li>
+    <li><b>C7x → AI.</b> Yüksek verimli paralel DSP; görüntü işleme ve derin öğrenme hızlandırması için (2× 2 TOPS).</li>
+  </ul>
+  <div class="note"><span class="tag">Avantaj</span>Yerli kartın bir avantajı: sorun çıktığında <b>donanım ekibine bildirip değişiklik talep edilebilmesi</b>. Erişilebilir debug pinleri (JTAG) de geliştirmeyi kolaylaştırır.</div>
+</div></section>
+
+<section id="hazirlik"><div class="wrap">
+  <p class="sec-no">07 — Ön hazırlık</p>
+  <h2>Önce zemini kurmak</h2>
+  <p class="sub">OS portlarken programı istediğin an durdurup ilerletebilmen, belleğe yükleyebilmen gerekir. Bunun için debug erişimi ve doğru araç zinciri şarttı.</p>
+  <ul class="list">
+    <li><b>Debug erişimi.</b> 10-pin Arm Debug bağlantısı tercih edildi (kartta mevcut); program akışını durdurma, devam ettirme ve yükleme bu sayede mümkün oldu.</li>
+    <li><b>Araç kurulumları.</b> Code Composer Studio (CCS), SysConfig ve TI MCU+ SDK. Derleme, yükleme ve register yapılandırması bu zincirle yapıldı.</li>
+    <li><b>Linux'u ayağa kaldırma.</b> Önce A53'e Debian tabanlı dağıtım flashlandı; iletişim çoğunlukla SSH, bootta gerekince USB-UART ile.</li>
+    <li><b>Dokümantasyon.</b> NuttX porting guide, AM67A TRM/datasheet/register map ve benzer NuttX portları (BCM2711, AM335x, A64, TMS570) referans alındı.</li>
+  </ul>
+  <div class="note alert"><span class="tag">Saha notu — JTAG</span>Beagle kartında debug portu kötü konumlandığı için JTAG ile girilemedi. Asıl Gemstone kartında ise 10-pin JTAG'i 20-pin adaptöre bağlamak için <b>el yapımı dönüştürücü kablo</b> üretildi; pinler multimetreyle tek tek ölçülüp eşleştirildi.</div>
+</div></section>
+
+<section id="surec"><div class="wrap">
+  <p class="sec-no">08 — Geliştirme süreci</p>
+  <h2>Sıfırdan NSH'e: izlenen adımlar</h2>
+  <p class="sub">Bir OS portlanırken hedef genelde shell'e (NSH) ulaşmaktır. Oraya varmak için şu zincir adım adım kuruldu.</p>
+  <ol class="proc">
+    <li><span class="n"></span><div><h4>Dokümantasyon ve kartı tanıma</h4><p>NuttX yapısını, hangi fonksiyonların kernelden çağrıldığını, hangilerinin karta özel yazılması gerektiğini anlama. TRM'de bellek haritası ve clock ayarlarını inceleme.</p></div></li>
+    <li><span class="n"></span><div><h4>Dosya ve klasör iskeleti</h4><p><code class="m">arch/</code> ve <code class="m">board/</code> altında benzer bir karttan (AM335x) kopya alıp isimleri, define'ları ve fonksiyon prefix'lerini AM67A'ya uyarlama; <code class="m">Kconfig</code> dosyalarını düzenleme.</p></div></li>
+    <li><span class="n"></span><div><h4>Timer interrupt'ı çalıştırma</h4><p>Timer, OS'in görevleri zamanlamasındaki en kritik kesme. Önce bunun ayağa kalkması gerekiyordu.</p></div></li>
+    <li><span class="n"></span><div><h4>D-cache & I-cache sorununu fark etme</h4><p>Varsayılan bellek haritasında register bölgeleri cache'leniyor, bu timer register'larını bozuyordu. İlgili bölgeyi cache'lenmez işaretlemek doğru çözümdü.</p></div></li>
+    <li><span class="n"></span><div><h4>MPU'yu ayarlama</h4><p>R5F'te MMU yok, MPU var. Register, TCM ve SRAM/DDR bölgelerinin erişim izinleri ve cache davranışı MPU ile tanımlandı.</p></div></li>
+    <li><span class="n"></span><div><h4>Interrupt mekanizmasını kurma</h4><p>Arm IRQ akışı (<code class="m">arm_vectorirq → arm_decodeirq → arm_doirq → irq_dispatch</code>) anlaşıldı; timer ve diğer kesmeler bu akışa oturtuldu.</p></div></li>
+    <li><span class="n"></span><div><h4>UART sürücüsü ve pinmux</h4><p>UART16550 sürücüsü yapılandırıldı, pinmux ayarlandı ve konsol çıktısı alındı — NSH'e giden son kapı.</p></div></li>
+  </ol>
+</div></section>
+
+<section id="kaynak"><div class="wrap">
+  <p class="sec-no">09 — Kaynak ağacı</p>
+  <h2>Hangi klasörlere dokunuldu?</h2>
+  <p class="sub">NuttX portunda neredeyse tüm değişiklik iki klasörde toplanır: <code class="m">arch/</code> (SoC'ye özgü) ve <code class="m">board/</code> (karta özgü).</p>
+  <ul class="list">
+    <li><b>arch/arm/.../am67/</b> — SoC yapılandırması ve temel başlatma kodu: boot, serial (UART), timer. Cache, MPU ve interrupt kurulumu burada.</li>
+    <li><b>board/.../configs/</b> — <code class="m">nsh</code> config'i, NuttX çalıştıran her kartta bulunan en temel yapılandırma. <code class="m">menuconfig</code> ayarları buraya kaydedilir.</li>
+    <li><b>board/.../scripts/</b> — iki kritik dosya: <code class="m">.ld</code> linker script (bellek adreslerini tanımlar) ve <code class="m">Make.defs</code> (derleme ayarları).</li>
+  </ul>
+  <h3>İş akışı</h3>
+  <pre><span class="c"># Config seç (klasör yolları, fonksiyon adları, alt-config'leri ayarlar)</span>
+<span class="k">./tools/configure.sh</span> -l beagley-ai:nsh
+
+<span class="c"># Derle → çıktı: ELF formatında "nuttx" dosyası</span>
+<span class="k">make</span> -j$(nproc)
+
+<span class="c"># İnce ayar / temizlik</span>
+<span class="k">make</span> menuconfig      <span class="c"># ayarları değiştir</span>
+<span class="k">make</span> savedefconfig    <span class="c"># ayarları kaydet</span>
+<span class="k">make</span> distclean       <span class="c"># derlenenleri + config'i sıfırla</span></pre>
+</div></section>
+
+<section id="remoteproc"><div class="wrap">
+  <p class="sec-no">10 — Yükleme yöntemi</p>
+  <h2>RemoteProc: NuttX'i R5F'e yüklemek</h2>
+  <p class="sub">Hedef çalıştırma yöntemi: A53'teki Linux, RemoteProc ile R5F çekirdeğini başlatır ve NuttX'i firmware olarak ona yükler. Bu, AMP (Asimetrik Çok İşlemcilik) yaklaşımıdır.</p>
+  <ul class="list">
+    <li><b>RemoteProc</b> — bir çekirdeğin başka bir çekirdeği başlatıp yönetmesini sağlar. Çekirdekler arası iletişim (IPC) için rpmsg ve virtio kavramları devreye girer.</li>
+    <li><b>Resource Table</b> — firmware'in belleği ve kaynakları nasıl kullanacağını Linux'a anlatan yapı. NuttX ELF'ine eklenmeden RemoteProc onu reddediyordu.</li>
+  </ul>
+  <pre><span class="c"># ELF'i firmware olarak Linux'a (A53) gönder</span>
+<span class="k">scp</span> nuttx debian@192.168.6.2:/home/debian
+
+<span class="c"># Beagle üzerinde firmware konumuna kopyala</span>
+<span class="k">cp</span> nuttx /lib/firmware/j722s0_mcu_fw0
+
+<span class="c"># Hangi remoteproc'u başlatacağını bul</span>
+<span class="k">cat</span> /sys/class/remoteproc/remoteproc*/firmware
+
+<span class="c"># R5F'i başlat → üzerinde NuttX koşar</span>
+<span class="k">echo</span> <span class="s">"start"</span> > /sys/class/remoteproc/remoteproc2/state
+<span class="k">cat</span>  /sys/class/remoteproc/remoteproc2/state   <span class="c"># "running" → çalışıyor</span></pre>
+  <div class="note"><span class="tag">Sonuç</span>Linux üzerinden R5F başlatılıp, R5F'in üzerinde NuttX koşturulabildi ve <b>RemoteProc ile NSH terminaline ulaşıldı.</b></div>
+</div></section>
+
+<section id="hatalar"><div class="wrap">
+  <p class="sec-no">11 — Saha notları</p>
+  <h2>Hata günlüğü: her hata bir ipucu</h2>
+  <p class="sub">Portlama büyük ölçüde hata okuma işidir. Aşağıdaki dizi, bir hatanın çözülünce nasıl yeni ve daha ileri bir hataya dönüştüğünü — yani ilerlemeyi — gösterir.</p>
+
+  <div class="err">
+    <div class="head"><span class="stage">remoteproc · boot</span><span class="step">Hata 1/4</span></div>
+    <div class="body">
+      <div class="msg">Invalid Argument.
+Boot failed: -22</div>
+      <p class="fix"><span class="lbl">Çözüldü.</span> -22 = EINVAL. Sebebi, ELF'te <b>Resource Table</b> olmamasıydı. Linux kernelindeki yapı baz alınarak bir resource table oluşturuldu; linker script ile C kodunda obje olarak tanımlanıp ELF'e dahil edildi.</p>
+    </div>
+  </div>
+
+  <div class="err">
+    <div class="head"><span class="stage">remoteproc · resources</span><span class="step">Hata 2/4</span></div>
+    <div class="body">
+      <div class="msg">Failed to process resources.
+Boot failed: -22</div>
+      <p class="fix"><span class="lbl">Çözüldü.</span> Tablo bulundu ama yapısı (struct) hatalıydı. Linux kernelindeki struct'ın birebir aynısı yazılarak düzeltildi. <em>Hatanın değişmesi, doğru yolda olunduğunun sinyaliydi.</em></p>
+    </div>
+  </div>
+
+  <div class="err">
+    <div class="head"><span class="stage">remoteproc · address</span><span class="step">Hata 3/4</span></div>
+    <div class="body">
+      <div class="msg">Bad address '0xcb' ...</div>
+      <p class="fix"><span class="lbl">Çözüldü.</span> NuttX yanlış adrese yükleniyordu. Linker script'teki adres, geçerli bir SoC SRAM bölgesine ayarlanınca düzeldi. Adresleri bulmak için TRM, ZephyrRTOS ve Linux device tree'leri referans alındı.</p>
+    </div>
+  </div>
+
+  <div class="err">
+    <div class="head"><span class="stage">r5f · bellek görünümü</span><span class="step">Hata 4/4</span></div>
+    <div class="body">
+      <div class="msg">Device tree'de adres 0x41000000 (ATCM) — ama R5F bunu kendi gözünde 0x0 görüyor.</div>
+      <p class="fix"><span class="lbl">Çözüldü.</span> 0x41000000, <b>A53'ün gözünden</b> ATCM adresi. R5F kendi TCM'ini 0x0 olarak görür. Linker'da adres 0x0 yapılınca NuttX çalıştı. <em>Aynı belleği iki çekirdek farklı adreste görür.</em></p>
+    </div>
+  </div>
+</div></section>
+
+<section id="kronoloji"><div class="wrap">
+  <p class="sec-no">12 — Kronoloji</p>
+  <h2>Üç dönemde ilerleme</h2>
+  <p class="sub">Proje üç farklı donanım/aşama üzerinden ilerledi. Her dönem kendi engellerini ve kazanımlarını getirdi.</p>
+  <div class="tl">
+    <div class="tl-item">
+      <div class="tl-phase">Dönem 1 · BeagleY-AI</div>
+      <h4>İlk port denemeleri ve RemoteProc</h4>
+      <p>Linux ayağa kaldırıldı, NuttX iskeleti kuruldu, RemoteProc ile yükleme öğrenildi. GPIO/UART denendi ama sonuç alınamadı; debug portu kötü konumlandığı için JTAG ile girilemedi.</p>
+    </div>
+    <div class="tl-item">
+      <div class="tl-phase">Dönem 2 · AM64x EVM</div>
+      <h4>Debug girilebilen kartla doğrulama</h4>
+      <p>NuttX'in neden çöktüğünü anlamak için debug erişimi olan AM64x EVM kullanıldı. TI SDK'sındaki GPIO/pinmux sürücüleri NuttX'e uyarlandı ve <b>NuttX'in R5 çekirdeğinde çalıştığı kanıtlandı</b> — kart üstündeki LED'ler yakılıp söndürüldü.</p>
+    </div>
+    <div class="tl-item">
+      <div class="tl-phase">Dönem 3 · Gemstone</div>
+      <h4>Asıl kart: JTAG, DDR ve bring-up</h4>
+      <p>El yapımı JTAG dönüştürücüyle WKUP çekirdeğine bağlanıldı. <code class="m">sbl_null</code> ile tüm çekirdekler initialize edildi. 1.8MB'lık binary SRAM'e sığmayınca DDR'a yükleme gerekti; <code class="m">sbl_null</code> config'i düzeltilerek DDR başlatıldı.</p>
+    </div>
+    <div class="tl-item">
+      <div class="tl-phase">Gemstone · derinlemesine</div>
+      <h4>nx_start ve linker'ı baştan yazmak</h4>
+      <p>Kod sürekli <code class="m">arm_boot</code>'a dönüyordu — çünkü <code class="m">nx_start</code> çağrısı eksikti. <code class="m">arm_head.S</code> incelenip eklendi. Debug sembolleri görünmeyince linker baştan, adresleri otomatik hesaplayacak şekilde yazıldı.</p>
+    </div>
+  </div>
+</div></section>
+
+<section id="vaka"><div class="wrap">
+  <p class="sec-no">13 — Vaka incelemesi</p>
+  <h2>Sinsi bir adres hatası</h2>
+  <p class="sub">NuttX, <code class="m">up_initial_state()</code> içinde idle thread'in stack'ini hesaplarken çöküyordu. Sebep, derleyici ile assembly arasındaki bir tip uyumsuzluğuydu.</p>
+  <pre><span class="c">// Beklenen: 0x7914D000 - 1024  =  0x7914CC00</span>
+<span class="c">// Alınan:   1 - 1024          =  0xFFFFFC01   ← tanımsız adres, çöküş</span>
+
+tcb->stack_alloc_ptr = (void *)(g_idle_topstack - CONFIG_IDLETHREAD_STACKSIZE);</pre>
+  <p><strong>Sebep:</strong> <code class="m">g_idle_topstack</code> assembly'de <code class="m">.long</code> (bir değer) olarak tanımlı, ama derleyici ona <code class="m">void*</code> (bir adres) gibi davranıyordu; bu yüzden değer 1'e düşüyordu.</p>
+  <p><strong>Çözüm:</strong> Değişkenin değeri yerine adresi kullanıldı — <code class="m">&amp;g_idle_topstack</code>. Böylece doğru taban adresi elde edildi.</p>
+  <div class="note alert"><span class="tag">Açık takip</span>Bu sınıftan iki sorun (issue <code class="m">#16386</code> ve <code class="m">#16384</code>) geçici çözümlerle aşıldı ama kökü tam netleşmedi. Çözüm için hem TI E2E forumuna hem de NuttX reposuna issue açıldı.</div>
+</div></section>
+
+<section id="durum"><div class="wrap">
+  <p class="sec-no">14 — Bilanço</p>
+  <h2>Nereye gelindi?</h2>
+  <div class="facts">
+    <div><h4>Donanım</h4><p>Üç dönem: BeagleY-AI, AM64x EVM, Gemstone.</p></div>
+    <div><h4>Durum</h4><p>NuttX, R5F çekirdeğinde çalışır; RemoteProc ile NSH'e ulaşıldı.</p></div>
+    <div><h4>Takip</h4><p>İki açık issue (#16384, #16386) izleniyor.</p></div>
+  </div>
+</div></section>
+
+<section id="gelecek"><div class="wrap">
+  <p class="sec-no">15 — Yol haritası</p>
+  <h2>Sıradaki adımlar</h2>
+  <ul class="list">
+    <li><b>Tüm GPIO pinleri.</b> Geri kalan pinlerin tamamının yapılandırılması.</li>
+    <li><b>Upstream merge.</b> Portun NuttX deposuna uygun biçimde düzenlenip merge edilmesi.</li>
+    <li><b>Doğrudan U-Boot.</b> RemoteProc yerine U-Boot üzerinden doğrudan çekirdeği başlatıp NuttX çalıştırma.</li>
+    <li><b>PX4.</b> NuttX üzerinde PX4 otopilot yazılımının çalıştırılması.</li>
+    <li><b>rpmsg ile haberleşme.</b> A çekirdeği ile R çekirdeği arasında rpmsg üzerinden iletişim.</li>
+    <li><b>Örnek uygulama.</b> NSH üzerinden başlatılabilen örnek bir Blink uygulaması.</li>
+  </ul>
+</div></section>
+
+<section id="kazanim"><div class="wrap">
+  <p class="sec-no">16 — Kapanış</p>
+  <h2>Süreçten kazanılanlar</h2>
+  <ul class="list">
+    <li><b>TI AM67A SoC ve SDK</b> ile çalışma — farklı boot yöntemleri ve debugging.</li>
+    <li><b>Linux internalleri</b> — bellek yönetimi (mm), remoteproc, boot ve init süreçleri.</li>
+    <li><b>Profiling ve tracing</b> araç ve yöntemleri.</li>
+    <li><b>Debug yeteneği</b> — kod tabanında gezinme, hata bulup düzeltme, JTAG kullanımı.</li>
+    <li><b>ARM ve x86 mimari farkları</b>, ELF ve linker script yapısı.</li>
+    <li><b>Ekosistem</b> — Yocto, U-Boot, Ardupilot, PX4 araçlarıyla tanışıklık.</li>
+  </ul>
+</div></section>
+
+</main>
+
+<footer><div class="wrap">
+  <span class="note-f">NuttX → Cortex-R5F<br><b>T3 Gemstone O1 · AM67A · Apache NuttX portlama notu</b></span>
+  <span class="note-f">Kaynaklar: porting günlüğü · sunum notları · README<br>İzlenen issue: #16384 · #16386</span>
+</div></footer>
+
+</body>
+</html>
